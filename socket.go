@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -13,6 +14,7 @@ import (
 type socket struct {
 	socket *websocket.Conn
 	cancel context.CancelFunc
+	mu     sync.Mutex
 
 	// heartbeatInterval is the delay in seconds between heartbeat notifications to the server.
 	heartbeatInterval uint
@@ -55,6 +57,9 @@ func (s *socket) disconnect() error {
 
 // push sends data on the connection.
 func (s *socket) push(data interface{}) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	return s.socket.WriteJSON(data)
 }
 
