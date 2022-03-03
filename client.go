@@ -78,6 +78,7 @@ func addressToWebsocket(addr string) (string, error) {
 	return addr, nil
 }
 
+// WithHeartbeatInterval option sets the heartbeat interval (seconds) on the socket connection.
 func WithHeartbeatInterval(interval uint) func(*Client) {
 	return func(c *Client) {
 		c.heartbeatInterval = interval
