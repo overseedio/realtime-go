@@ -13,6 +13,7 @@ import (
 // socket manages a connection to the phoenix server via websockets.
 type socket struct {
 	socket *websocket.Conn
+	router *router
 	cancel context.CancelFunc
 	mu     sync.Mutex
 
@@ -94,8 +95,15 @@ func (s *socket) listen(ctx context.Context) {
 			if err := s.socket.ReadJSON(&message); err != nil {
 				log.Println("message read error:", err)
 			}
-			log.Println("new message:", message)
-			time.Sleep(1 * time.Second)
+
+			// handle events and route messages
+			switch message.Event {
+			case EVENT_REPLY:
+			case EVENT_JOIN:
+			case EVENT_MESSAGE:
+			default:
+				s.router.RouteMessage(&message)
+			}
 		}
 	}
 }

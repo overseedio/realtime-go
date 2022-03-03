@@ -17,6 +17,7 @@ type Client struct {
 	params       map[string]interface{}
 
 	socket *socket
+	router *router
 
 	heartbeatInterval uint
 }
@@ -45,9 +46,14 @@ func NewClient(addr, apiKey string, options ...ClientOption) (*Client, error) {
 		opt(c)
 	}
 
+	// create router
+	router := newRouter()
+	c.router = router
+
 	// create socket
 	socket := newSocket(c.heartbeatInterval)
 	c.socket = socket
+	c.socket.router = router
 
 	return c, nil
 }
