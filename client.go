@@ -12,6 +12,8 @@ type Client struct {
 	addr, apiKey string
 
 	socket *socket
+
+	heartbeatInterval uint
 }
 
 // NewClient returns a realtime client.
@@ -38,7 +40,7 @@ func NewClient(addr, apiKey string, options ...func(*Client)) (*Client, error) {
 	}
 
 	// create socket
-	socket := newSocket()
+	socket := newSocket(c.heartbeatInterval)
 	c.socket = socket
 
 	return c, nil
@@ -74,4 +76,10 @@ func addressToWebsocket(addr string) (string, error) {
 	addr = fmt.Sprintf("%v/realtime/v1/websocket", addr)
 
 	return addr, nil
+}
+
+func WithHeartbeatInterval(interval uint) func(*Client) {
+	return func(c *Client) {
+		c.heartbeatInterval = interval
+	}
 }
