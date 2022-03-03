@@ -9,6 +9,8 @@ const (
 	EVENT_HEARTBEAT Event = "heartbeat"
 )
 
+type Topic string
+
 const (
-	PHOENIX_TOPIC string = "phoenix"
+	PHOENIX_TOPIC Topic = "phoenix"
 )
