@@ -7,9 +7,14 @@ import (
 	"strings"
 )
 
+// ClientOption represents the client configuration options.
+// i.e. WithTable
+type ClientOption func(c *Client)
+
 // Client manages connections to the realtime server topics.
 type Client struct {
 	addr, apiKey string
+	params       map[string]interface{}
 
 	socket *socket
 
@@ -17,7 +22,7 @@ type Client struct {
 }
 
 // NewClient returns a realtime client.
-func NewClient(addr, apiKey string, options ...func(*Client)) (*Client, error) {
+func NewClient(addr, apiKey string, options ...ClientOption) (*Client, error) {
 	// convert address to ws
 	addr, err := addressToWebsocket(addr)
 	if err != nil {
@@ -32,6 +37,7 @@ func NewClient(addr, apiKey string, options ...func(*Client)) (*Client, error) {
 	c := &Client{
 		addr:   addr,
 		apiKey: apiKey,
+		params: map[string]interface{}{},
 	}
 
 	// set options
@@ -57,12 +63,41 @@ func (c *Client) Disconnect() error {
 }
 
 // Channel creates a new subscription channel to the realtime server.
-func (c *Client) Channel() *Channel {
-	return nil
+func (c *Client) Channel(options ...ChannelOption) (*Channel, error) {
+	return newChannel(c, options...)
 }
 
 // SetAuth updates the client and channels with the latest token.
-func (c *Client) SetAuth(token string) {}
+func (c *Client) SetAuth(token string) {
+	c.params[PARAM_USER_TOKEN] = token
+}
+
+// WithHeartbeatInterval option sets the heartbeat interval () on the socket connection.
+func WithHeartbeatInterval(interval uint) func(*Client) {
+	return func(c *Client) {
+		c.heartbeatInterval = interval
+	}
+}
+
+// WithUserToken option sets the user_token parameter for user auth when communicating with the server.
+// i.e. authenticating the user for an RLS protected table.
+func WithUserToken(token string) ClientOption {
+	return func(c *Client) {
+		c.params[PARAM_USER_TOKEN] = token
+	}
+}
+
+// WithParams option sets the request parameters used when sending data to the server.
+func WithParams(params map[string]interface{}) ClientOption {
+	// avoid nil
+	if params == nil {
+		params = map[string]interface{}{}
+	}
+
+	return func(c *Client) {
+		c.params = params
+	}
+}
 
 func addressToWebsocket(addr string) (string, error) {
 	_, err := url.ParseRequestURI(addr)
@@ -76,11 +111,4 @@ func addressToWebsocket(addr string) (string, error) {
 	addr = fmt.Sprintf("%v/realtime/v1/websocket", addr)
 
 	return addr, nil
-}
-
-// WithHeartbeatInterval option sets the heartbeat interval (seconds) on the socket connection.
-func WithHeartbeatInterval(interval uint) func(*Client) {
-	return func(c *Client) {
-		c.heartbeatInterval = interval
-	}
 }
