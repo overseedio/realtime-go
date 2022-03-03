@@ -40,8 +40,9 @@ func (s *socket) connect(ctx context.Context, addr string) error {
 	}
 	s.socket = conn
 
-	// run heartbeat routine
+	// run heartbeat and listen routines
 	go s.heartbeat(ctx, time.Duration(s.heartbeatInterval*uint(time.Second)))
+	go s.listen(ctx)
 
 	return nil
 }
@@ -78,4 +79,18 @@ func (s *socket) heartbeat(ctx context.Context, interval time.Duration) {
 }
 
 // listen is a routine receiving messages from the connection.
-func (s *socket) listen(ctx context.Context) {}
+func (s *socket) listen(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			var message Message
+			if err := s.socket.ReadJSON(&message); err != nil {
+				log.Println("message read error:", err)
+			}
+			log.Println("new message:", message)
+			time.Sleep(1 * time.Second)
+		}
+	}
+}
