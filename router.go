@@ -35,10 +35,10 @@ func (r *router) RouteMessage(msg *Message) {
 	// get topic to route message to channel
 	ch, ok := r.channels[msg.Topic]
 	if !ok {
-		r.mu.Unlock()
+		r.mu.RUnlock()
 		return
 	}
-	r.mu.Unlock()
+	r.mu.RUnlock()
 
 	// route message to channel handler
 	switch msg.Event {
